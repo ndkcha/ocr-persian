@@ -1,3 +1,6 @@
+# ignore the training data
+training_data/
+
 # Mac OS X hidden files
 .DS_Store
 
