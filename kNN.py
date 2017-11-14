@@ -26,8 +26,8 @@ noOfTraining = 0
 noOfTesting = 0
 
 # training samples (to be updated from the image inputs
-img_train = np.empty([no_train_data*n, 400])
-img_test = np.empty([(total_data-no_train_data)*n, 400])
+img_train = np.empty([no_train_data*n, data_width*data_height])
+img_test = np.empty([(total_data-no_train_data)*n, data_width*data_height])
 
 print("Loading digits...")
 # iterate through the directory to get digit samples
