@@ -18,6 +18,10 @@ no_train_data = 700
 data_width = 20
 # resultant height of the sample image
 data_height = 20
+# C for SVM
+c = 2.67
+# Gamma for SVM
+gamma = 5.383
 
 # labels for the training data classes
 numbers = np.arange(n)
@@ -65,19 +69,31 @@ train_labels = np.repeat(numbers, no_train_data)[:, np.newaxis]
 test_label = np.repeat(numbers, (total_data-no_train_data))[:, np.newaxis]
 
 # convert them to floating data type
-train_labels = train_labels.astype(np.float32)
+train_labels_float = train_labels.astype(np.float32)
 
 # train with kNN
 knn = cv2.ml.KNearest_create()
-knn.train(img_train, cv2.ml.ROW_SAMPLE, train_labels)
+knn.train(img_train, cv2.ml.ROW_SAMPLE, train_labels_float)
+
+# train with SVM
+svm = cv2.ml.SVM_create()
+svm.setType(cv2.ml.SVM_C_SVC)
+svm.setKernel(cv2.ml.SVM_LINEAR)
+svm.setC(c)
+svm.setGamma(gamma)
+svm.train(img_train, cv2.ml.ROW_SAMPLE, train_labels)
 
 # test the data
-ret, result, neighbour, dist = knn.findNearest(img_test, k)
+ret, knn_result, neighbour, dist = knn.findNearest(img_test, k)
+svm_result = svm.predict(img_test)[1]
 
 # display the results
-print("k =", k)
-matches = (result == test_label)
-correct = np.count_nonzero(matches)
-print("correct results: ", correct, "total results: ", result.size)
-accuracy = correct*100.0/result.size
-print("accuracy: ", accuracy)
+print("kNN : k =", k, "SVM : c =", c, "Gamma =", gamma)
+knn_matches = (knn_result == test_label)
+knn_correct = np.count_nonzero(knn_matches)
+svm_matches = (svm_result == test_label)
+svm_correct = np.count_nonzero(svm_matches)
+print("total results: ", knn_result.size, "correct results - kNN: ", knn_correct, "SVM: ", svm_correct)
+knn_acc= knn_correct*100.0/knn_result.size
+svm_acc = svm_correct*100.0/svm_result.size
+print("accuracy - kNN: ", knn_acc, "SVM: ", svm_acc)
