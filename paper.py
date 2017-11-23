@@ -52,13 +52,14 @@ for digit_samples in numbers:
         # remove the erosion (test case: 2)
         kernel = np.ones((5, 5), np.uint8)
         c_img = cv2.erode(r_img, kernel, iterations=1)
+        i_img = cv2.bitwise_not(c_img)
 
         # divide the image into 5x5 sub matrices
-        div_img = np.array(c_img).reshape((-1, 5, 5))
+        div_img = np.array(i_img).reshape((-1, 5, 5))
         # iterate through the matrices to extract the features
         for sub_matrix in div_img:
             # calculate the zeros in the matrix (first feature)
-            zeros= np.where(sub_matrix == 0)
+            zeros= np.where(sub_matrix == 255)
             # add the first feature to the vector
             feature_vector[ff] = zeros[0].size
             if feature_vector[ff] == 0:
@@ -79,7 +80,7 @@ for digit_samples in numbers:
             tf += 1
 
         # add fourier transform (fourth feature)
-        ff_img = np.fft.rfft(np.array(c_img.reshape(-1)))
+        ff_img = np.fft.rfft(np.array(i_img.reshape(-1)))
         fft_img = ((ff_img.real ** 2) + (ff_img.imag ** 2)) ** 0.5
         feature_vector[48:] = fft_img[:40]
 
@@ -91,6 +92,8 @@ for digit_samples in numbers:
             img_test[noOfTesting] = feature_vector
             noOfTesting += 1
         i += 1
+
+print(img_train[0])
 
 img_train = img_train.reshape(-1, 88).astype(np.float32)
 img_test = img_test.reshape(-1, 88).astype(np.float32)
