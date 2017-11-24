@@ -25,41 +25,52 @@ numbers = np.arange(n)
 noOfTraining = 0
 noOfTesting = 0
 
+# image size
+img_size = (34, 40)
+# sub matrix shape
+sub_matrix_shape = (-1, 17, 20)
+# sub matrix size
+sub_matrix_size = 4
+# first fft elements
+fft_no = 40
+# size of features
+feature_space = (sub_matrix_size * 3) + fft_no
+
 # training samples (to be updated from the image inputs)
 # we have total of 88 features from the input
-img_train = np.empty([no_train_data*n, 88])
-img_test = np.empty([(total_data-no_train_data)*n, 88])
+img_train = np.empty([no_train_data*n, feature_space])
+img_test = np.empty([(total_data-no_train_data)*n, feature_space])
 
-print("Loading digits...")
 # iterate through the directory to get digit samples
 for digit_samples in numbers:
     i = 0
-    print("Loading #" + str(digit_samples))
     # iterate through the image samples
     for digits in os.listdir(os.fsdecode(dir_train_data) + "/" + str(digit_samples)):
+        print("# Loading digits # %d%%\r" % ((digit_samples * 10) + i/100), end="")
         # indexes of each features
         ff = 0
-        sf = 16
-        tf = 32
+        sf = sub_matrix_size
+        tf = sub_matrix_size * 2
         # feature vector
-        feature_vector = np.zeros(88)
+        feature_vector = np.zeros(feature_space)
         # get the sample image
         img = cv2.imread(os.fsdecode(dir_train_data) + "/" + str(digit_samples) + "/" + os.fsdecode(digits), 0)
         # resize it
-        r_img = cv2.resize(img, (20, 20), interpolation=cv2.INTER_CUBIC)
+        img = cv2.resize(img, img_size, interpolation=cv2.INTER_CUBIC)
         # reduce noise (canny edge detection) (test case: 1)
-        # c_img = cv2.Canny(r_img, 100, 200)
+        img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
-        kernel = np.ones((5, 5), np.uint8)
-        c_img = cv2.erode(r_img, kernel, iterations=1)
-        i_img = cv2.bitwise_not(c_img)
+        # kernel = np.ones((5, 5), np.uint8)
+        # img = cv2.erode(img, kernel, iterations=1)
+        # invert the image.
+        img = cv2.bitwise_not(img)
 
         # divide the image into 5x5 sub matrices
-        div_img = np.array(i_img).reshape((-1, 5, 5))
+        div_img = np.array(img).reshape(sub_matrix_shape)
         # iterate through the matrices to extract the features
         for sub_matrix in div_img:
             # calculate the zeros in the matrix (first feature)
-            zeros= np.where(sub_matrix == 255)
+            zeros= np.where(sub_matrix != 0)
             # add the first feature to the vector
             feature_vector[ff] = zeros[0].size
             if feature_vector[ff] == 0:
@@ -72,6 +83,7 @@ for digit_samples in numbers:
             for coordinates in co_zeros:
                 mean_distance += ((coordinates[0]**2) + (coordinates[1]**2))**0.5
                 mean_angle += coordinates[0] == 0 and 90 or math.degrees(math.atan(coordinates[1]/coordinates[0]))
+                # mean_angle += coordinates[0] == 0 and 1.5708 or math.atan(coordinates[1] / coordinates[0])
             # add the second feature to the vector
             feature_vector[sf] = mean_distance/float(feature_vector[ff])
             feature_vector[tf] = mean_angle/float(feature_vector[ff])
@@ -80,9 +92,9 @@ for digit_samples in numbers:
             tf += 1
 
         # add fourier transform (fourth feature)
-        ff_img = np.fft.rfft(np.array(i_img.reshape(-1)))
+        ff_img = np.fft.fft(np.array(img.reshape(-1)))
         fft_img = ((ff_img.real ** 2) + (ff_img.imag ** 2)) ** 0.5
-        feature_vector[48:] = fft_img[:40]
+        feature_vector[(sub_matrix_size*3):] = fft_img[:fft_no]
 
         # convert it to array
         if i < no_train_data:
@@ -93,10 +105,8 @@ for digit_samples in numbers:
             noOfTesting += 1
         i += 1
 
-print(img_train[0])
-
-img_train = img_train.reshape(-1, 88).astype(np.float32)
-img_test = img_test.reshape(-1, 88).astype(np.float32)
+img_train = img_train.reshape(-1, feature_space).astype(np.float32)
+img_test = img_test.reshape(-1, feature_space).astype(np.float32)
 
 print("training data set matrix dimensions: ", img_train.shape)
 print("testing data set training dimensions: ", img_test.shape)
@@ -108,6 +118,7 @@ test_label = np.repeat(numbers, (total_data-no_train_data))[:, np.newaxis]
 # convert them to floating data type
 train_labels_float = train_labels.astype(np.float32)
 
+print("# training model...\r", end="")
 # train with kNN
 knn = cv2.ml.KNearest_create()
 knn.train(img_train, cv2.ml.ROW_SAMPLE, train_labels_float)
@@ -120,6 +131,7 @@ svm.setC(c)
 svm.setGamma(gamma)
 svm.train(img_train, cv2.ml.ROW_SAMPLE, train_labels)
 
+print("# verifying model...\r", end="")
 # test the data
 ret, knn_result, neighbour, dist = knn.findNearest(img_test, k)
 svm_result = svm.predict(img_test)[1]

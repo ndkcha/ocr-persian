@@ -15,9 +15,9 @@ total_data = 1000
 no_train_data = 700
 # for pre-processing, image transformation
 # resultant width of the sample image
-data_width = 20
+data_width = 40
 # resultant height of the sample image
-data_height = 20
+data_height = 34
 # C for SVM
 c = 2.67
 # Gamma for SVM
@@ -39,6 +39,7 @@ for digit_samples in numbers:
     i = 0
     # iterate through the image samples
     for digits in os.listdir(os.fsdecode(dir_train_data) + "/" + str(digit_samples)):
+        print("Loading digits # %d%%\r" % ((digit_samples * 10) + i / 100), end="")
         # get the sample image
         img = cv2.imread(os.fsdecode(dir_train_data) + "/" + str(digit_samples) + "/" + os.fsdecode(digits), 0)
         # resize it
@@ -48,12 +49,15 @@ for digit_samples in numbers:
         # remove the erosion (test case: 2)
         kernel = np.ones((5,5),np.uint8)
         c_img = cv2.erode(r_img, kernel, iterations=1)
+        # threshold the image, setting all foreground pixels to
+        # 255 and all background pixels to 0
+        thresh_img = cv2.threshold(r_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
         # convert it to array
         if i < no_train_data:
-            img_train[noOfTraining] = np.array(c_img).reshape(data_width * data_height)
+            img_train[noOfTraining] = np.array(thresh_img).reshape(data_width * data_height)
             noOfTraining += 1
         else:
-            img_test[noOfTesting] = np.array(c_img).reshape(data_width * data_height)
+            img_test[noOfTesting] = np.array(thresh_img).reshape(data_width * data_height)
             noOfTesting += 1
         i += 1
 
@@ -71,6 +75,8 @@ test_label = np.repeat(numbers, (total_data-no_train_data))[:, np.newaxis]
 # convert them to floating data type
 train_labels_float = train_labels.astype(np.float32)
 
+print("# training model...\r", end="")
+
 # train with kNN
 knn = cv2.ml.KNearest_create()
 knn.train(img_train, cv2.ml.ROW_SAMPLE, train_labels_float)
@@ -82,6 +88,8 @@ svm.setKernel(cv2.ml.SVM_LINEAR)
 svm.setC(c)
 svm.setGamma(gamma)
 svm.train(img_train, cv2.ml.ROW_SAMPLE, train_labels)
+
+print("# verifying model...\r", end="")
 
 # test the data
 ret, knn_result, neighbour, dist = knn.findNearest(img_test, k)
