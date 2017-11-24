@@ -20,8 +20,8 @@ c = 2.67
 gamma = 5.383
 # image size for computing feature space
 # all the images will be resized to this size
-width = 40
-height = 34
+dim = 34
+img_size = (dim, dim)
 # flags for the affine transformation (in order to rotate the image)
 affine_flags = cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR
 # bin size of histogram (for HoG method)
@@ -50,9 +50,9 @@ def deskewMoments(image):
         return image.copy()
     # determine transformation matrix (based on skew value) from the covariance and variance of the mass distribution
     skew = m['mu11'] / m['mu02']
-    M = np.float32([[1, skew, -0.5 * height * skew], [0, 1, 0]])
+    M = np.float32([[1, skew, -0.5 * img_size[0] * skew], [0, 1, 0]])
     # perform transformation
-    image = cv2.warpAffine(image, M, (width, height), flags=affine_flags)
+    image = cv2.warpAffine(image, M, img_size, flags=affine_flags)
     return image
 
 
@@ -103,10 +103,10 @@ def hog(image):
 print("Loading digits...")
 for digit_samples in numbers:
     i = 0
-    print(" # %d%%\r" % ((digit_samples + 1) * 10), end="")
     for digits in os.listdir(os.fsdecode(dir_train_data) + "/" + str(digit_samples)):
+        print("Loading digits # %d%%\r" % ((digit_samples * 10) + i / 100), end="")
         img = cv2.imread(os.fsdecode(dir_train_data) + "/" + str(digit_samples) + "/" + os.fsdecode(digits), 0)
-        r_img = cv2.resize(img, (width, height))
+        r_img = cv2.resize(img, img_size)
         # threshold the image. In a way, it inverts the image.
         thresh_img = cv2.threshold(r_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
         # deskew the image
@@ -136,6 +136,7 @@ test_label = np.repeat(numbers, (total_data-no_train_data))[:, np.newaxis]
 
 train_labels_float = train_labels.astype(np.float32)
 
+print("# training model...\r", end="")
 # train with kNN
 knn = cv2.ml.KNearest_create()
 knn.train(img_train, cv2.ml.ROW_SAMPLE, train_labels_float)
@@ -148,6 +149,7 @@ svm.setC(c)
 svm.setGamma(gamma)
 svm.train(img_train, cv2.ml.ROW_SAMPLE, train_labels)
 
+print("# verifying model...\r", end="")
 # perform kNN and SVM on test data
 knn_result = knn.findNearest(img_test, k)[1]
 svm_result = svm.predict(img_test)[1]
