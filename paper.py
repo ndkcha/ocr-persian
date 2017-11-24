@@ -32,7 +32,7 @@ sub_matrix_shape = (-1, 17, 20)
 # sub matrix size
 sub_matrix_size = 4
 # first fft elements
-fft_no = 40
+fft_no = 200
 # size of features
 feature_space = (sub_matrix_size * 3) + fft_no
 
@@ -58,10 +58,10 @@ for digit_samples in numbers:
         # resize it
         img = cv2.resize(img, img_size, interpolation=cv2.INTER_CUBIC)
         # reduce noise (canny edge detection) (test case: 1)
-        img = cv2.Canny(img, 50, 300)
+        # img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
-        # kernel = np.ones((5, 5), np.uint8)
-        # img = cv2.erode(img, kernel, iterations=1)
+        kernel = np.ones((5, 5), np.uint8)
+        img = cv2.erode(img, kernel, iterations=1)
         # invert the image.
         img = cv2.bitwise_not(img)
 

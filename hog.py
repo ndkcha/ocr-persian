@@ -106,11 +106,16 @@ for digit_samples in numbers:
     for digits in os.listdir(os.fsdecode(dir_train_data) + "/" + str(digit_samples)):
         print("Loading digits # %d%%\r" % ((digit_samples * 10) + i / 100), end="")
         img = cv2.imread(os.fsdecode(dir_train_data) + "/" + str(digit_samples) + "/" + os.fsdecode(digits), 0)
-        r_img = cv2.resize(img, img_size)
-        # threshold the image. In a way, it inverts the image.
-        thresh_img = cv2.threshold(r_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        img = cv2.resize(img, img_size)
+        # reduce noise (canny edge detection) (test case: 1)
+        # img = cv2.Canny(img, 50, 300)
+        # remove the erosion (test case: 2)
+        # kernel = np.ones((5, 5), np.uint8)
+        # img = cv2.erode(img, kernel, iterations=1)
+        # In a way, it inverts the image.
+        img = cv2.bitwise_not(img)
         # deskew the image
-        d_img = deskewMoments(thresh_img)
+        d_img = deskewMoments(img)
         # histogram of gradient descriptor
         h_img = hog(d_img)
         # divide between the training and testing data.

@@ -43,21 +43,20 @@ for digit_samples in numbers:
         # get the sample image
         img = cv2.imread(os.fsdecode(dir_train_data) + "/" + str(digit_samples) + "/" + os.fsdecode(digits), 0)
         # resize it
-        r_img = cv2.resize(img, (data_width, data_height), interpolation=cv2.INTER_CUBIC)
+        img = cv2.resize(img, (data_width, data_height), interpolation=cv2.INTER_CUBIC)
         # reduce noise (canny edge detection) (test case: 1)
-        # c_img = cv2.Canny(r_img, 100, 200)
+        # img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
         kernel = np.ones((5,5),np.uint8)
-        c_img = cv2.erode(r_img, kernel, iterations=1)
-        # threshold the image, setting all foreground pixels to
-        # 255 and all background pixels to 0
-        thresh_img = cv2.threshold(r_img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        img = cv2.erode(img, kernel, iterations=1)
+        # threshold the image, in a way, invert it
+        img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
         # convert it to array
         if i < no_train_data:
-            img_train[noOfTraining] = np.array(thresh_img).reshape(data_width * data_height)
+            img_train[noOfTraining] = np.array(img).reshape(data_width * data_height)
             noOfTraining += 1
         else:
-            img_test[noOfTesting] = np.array(thresh_img).reshape(data_width * data_height)
+            img_test[noOfTesting] = np.array(img).reshape(data_width * data_height)
             noOfTesting += 1
         i += 1
 
