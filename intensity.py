@@ -33,7 +33,6 @@ noOfTesting = 0
 img_train = np.empty([no_train_data*n, data_width*data_height])
 img_test = np.empty([(total_data-no_train_data)*n, data_width*data_height])
 
-print("Loading digits...")
 # iterate through the directory to get digit samples
 for digit_samples in numbers:
     i = 0
@@ -47,10 +46,10 @@ for digit_samples in numbers:
         # reduce noise (canny edge detection) (test case: 1)
         # img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
-        kernel = np.ones((5,5),np.uint8)
+        kernel = np.ones((3,3),np.uint8)
         img = cv2.erode(img, kernel, iterations=1)
-        # threshold the image, in a way, invert it
-        img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        # invert it
+        img = cv2.bitwise_not(img)
         # convert it to array
         if i < no_train_data:
             img_train[noOfTraining] = np.array(img).reshape(data_width * data_height)

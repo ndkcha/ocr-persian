@@ -41,6 +41,7 @@ feature_space = (sub_matrix_size * 3) + fft_no
 img_train = np.empty([no_train_data*n, feature_space])
 img_test = np.empty([(total_data-no_train_data)*n, feature_space])
 
+print("Invert later. Erosion")
 # iterate through the directory to get digit samples
 for digit_samples in numbers:
     i = 0
@@ -60,7 +61,7 @@ for digit_samples in numbers:
         # reduce noise (canny edge detection) (test case: 1)
         # img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
-        kernel = np.ones((5, 5), np.uint8)
+        kernel = np.ones((3, 3), np.uint8)
         img = cv2.erode(img, kernel, iterations=1)
         # invert the image.
         img = cv2.bitwise_not(img)

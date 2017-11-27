@@ -110,7 +110,7 @@ for digit_samples in numbers:
         # reduce noise (canny edge detection) (test case: 1)
         # img = cv2.Canny(img, 50, 300)
         # remove the erosion (test case: 2)
-        # kernel = np.ones((5, 5), np.uint8)
+        # kernel = np.ones((3, 3), np.uint8)
         # img = cv2.erode(img, kernel, iterations=1)
         # In a way, it inverts the image.
         img = cv2.bitwise_not(img)
