@@ -41,7 +41,6 @@ feature_space = (sub_matrix_size * 3) + fft_no
 img_train = np.empty([no_train_data*n, feature_space])
 img_test = np.empty([(total_data-no_train_data)*n, feature_space])
 
-print("Invert later. Erosion")
 # iterate through the directory to get digit samples
 for digit_samples in numbers:
     i = 0
